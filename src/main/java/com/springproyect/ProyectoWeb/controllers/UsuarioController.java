@@ -2,6 +2,7 @@ package com.springproyect.ProyectoWeb.controllers;
 
 import com.springproyect.ProyectoWeb.dao.UsuarioDao;
 import com.springproyect.ProyectoWeb.models.Usuario;
+import com.springproyect.ProyectoWeb.utils.JWTUtil;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,22 +14,22 @@ import java.util.List;
 public class UsuarioController {
     @Autowired
     private UsuarioDao usuarioDao;
+    @Autowired
+    private JWTUtil jwtUtil;
 
-    @RequestMapping(value = "api/usuarios/{id}", method = RequestMethod.GET)
-    public Usuario getUsuario(@PathVariable Long id){
-        Usuario user = new Usuario();
-        user.setId(id);
-        user.setNombre("Mateo");
-        user.setApellido("Ramirez");
-        user.setEmail("usuario@usuario.com");
-        user.setTelefono("24589453");
 
-        return user;
-    }
-    @RequestMapping(value = "api/usuarios")
-    public List<Usuario> getUsuarios(){
+    @RequestMapping(value = "api/usuarios", method = RequestMethod.GET)
+    public List<Usuario> getUsuarios(@RequestHeader(value="Authorization") String token) {
+        if (!validarToken(token)) { return null; }
+
         return usuarioDao.getUsuarios();
     }
+
+    private boolean validarToken(String token) {
+        String usuarioId = jwtUtil.getKey(token);
+        return usuarioId != null;
+    }
+
 
     //Seteo contraseña encriptandola con Argon2
     @RequestMapping(value = "api/usuarios", method = RequestMethod.POST)
@@ -51,20 +52,12 @@ public class UsuarioController {
         return user;
     }
     @RequestMapping(value = "api/usuarios/{id}", method = RequestMethod.DELETE)
-    public void eliminar(@PathVariable Long id){
+    public void eliminar(@RequestHeader(value="Authorization") String token, @PathVariable Long id){
+        if (!validarToken(token)) { return; }
         usuarioDao.eliminar(id);
 
     }
 
-    @RequestMapping(value = "api/usuarios47")
-    public Usuario buscar(){
-        Usuario user = new Usuario();
-        user.setNombre("Mateo");
-        user.setApellido("Ramirez");
-        user.setEmail("usuario@usuario.com");
-        user.setTelefono("24589453");
 
-        return user;
-    }
 
 }
